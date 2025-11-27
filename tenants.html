@@ -37,7 +37,6 @@
                     <li class="active"><a href="tenants.html">Tenants</a></li>
                     <li><a href="maintenance.html">Maintenance</a></li>
                     <li><a href="billing.html">Billing</a></li>
-                    <li><a href="forms-list.html">Forms</a></li>
                     <li><a href="admin.html">Admin</a></li>
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
@@ -94,7 +93,10 @@
                             </div>
                             <div class="form-group"><label for="tenant-name">Full Name</label><input type="text" id="tenant-name" class="form-control" required></div>
                             <div class="form-group"><label for="tenant-email">Email</label><input type="email" id="tenant-email" class="form-control" required></div>
-                            <div class="form-group"><label for="tenant-property">Assign to Property</label><select id="tenant-property" class="form-control" required></select></div>
+                            <div class="form-group">
+                                <label for="tenant-property">Assign to Property</label>
+                                <select id="tenant-property" class="form-control"></select>
+                            </div>
                             <div class="form-group"><label for="tenant-lease-end">Lease End Date</label><input type="date" id="tenant-lease-end" class="form-control"></div>
                         </form>
                         <hr>
