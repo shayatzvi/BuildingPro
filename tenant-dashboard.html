@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tenant Dashboard</title>
+    <!-- Bootstrap 3 -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <style>
+        body { padding-top: 70px; }
+        .status-tag { display: inline-block; padding: 2px 8px; border-radius: 10px; color: #fff; }
+        .status-tag[data-status="open"] { background-color: #d9534f; }
+        .status-tag[data-status="in-progress"] { background-color: #f0ad4e; }
+        .status-tag[data-status="closed"] { background-color: #5cb85c; }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-default navbar-fixed-top">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">Tenant Portal</a>
+            </div>
+            <div class="collapse navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="#"><span id="tenant-email"></span></a></li>
+                    <li><a href="#" id="tenant-logout-button">Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Welcome, <span id="tenant-name"></span></h1>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Your Information</h3>
+                    </div>
+                    <div class="panel-body">
+                        <p><strong>Property:</strong> <span id="tenant-property-address"></span></p>
+                        <p><strong>Lease End:</strong> <span id="tenant-lease-end"></span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Your Invoices</h3>
+                    </div>
+                    <ul id="tenant-invoices-list" class="list-group">
+                        <!-- Invoices will be loaded here -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Submit a Maintenance Request</h3>
+                    </div>
+                    <div class="panel-body">
+                        <form id="portal-maintenance-form">
+                            <div class="form-group">
+                                <label for="portal-issue-description">Issue Description</label>
+                                <textarea id="portal-issue-description" rows="3" class="form-control" required placeholder="e.g., The kitchen sink is leaking under the cabinet."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="portal-issue-priority">Priority</label>
+                                <select id="portal-issue-priority" class="form-control" required>
+                                    <option value="low">Low - Not urgent</option>
+                                    <option value="medium">Medium - Needs attention soon</option>
+                                    <option value="high">High - Urgent</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Submit Request</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Maintenance History</h3>
+                    </div>
+                    <ul id="tenant-maintenance-list" class="list-group">
+                        <!-- Maintenance requests will be loaded here -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="tenant-auth.js"></script>
+
+</body>
+</html>

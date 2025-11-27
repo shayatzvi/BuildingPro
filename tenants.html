@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tenants - Property Management</title>
+    <!-- Bootstrap 3 -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <style>
+        body { padding-top: 70px; }
+        .detail-panel { display: none; }
+        .page-header { margin-top: 0; }
+        .status-tag { display: inline-block; padding: 2px 8px; border-radius: 10px; color: #fff; }
+        .status-tag[data-status="open"] { background-color: #d9534f; }
+        .status-tag[data-status="in-progress"] { background-color: #f0ad4e; }
+        .status-tag[data-status="closed"] { background-color: #5cb85c; }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-default navbar-fixed-top">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">PropSys</a>
+            </div>
+            <div class="collapse navbar-collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="dashboard.html">Dashboard</a></li>
+                    <li><a href="properties.html">Properties</a></li>
+                    <li class="active"><a href="tenants.html">Tenants</a></li>
+                    <li><a href="maintenance.html">Maintenance</a></li>
+                    <li><a href="billing.html">Billing</a></li>
+                    <li><a href="admin.html">Admin</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="#"><span id="user-email"></span></a></li>
+                    <li><a href="#" id="logout-button">Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Master View -->
+            <div class="col-md-12 master-view">
+                <div class="page-header">
+                    <div class="pull-right">
+                        <button id="add-tenant-btn" class="btn btn-primary">
+                            <span class="glyphicon glyphicon-plus"></span> Add Tenant
+                        </button>
+                    </div>
+                    <h1>Tenants</h1>
+                </div>
+                <div class="panel panel-default">
+                    <div class="panel-body">
+                        <table class="table table-hover">
+                            <thead><tr><th>Name</th><th>Property</th><th>Lease End</th></tr></thead>
+                            <tbody id="tenants-list"></tbody>
+                        </table>
+                        <div id="empty-tenants-state" class="text-center" style="display: none; padding: 2rem;">
+                            <span class="glyphicon glyphicon-user" style="font-size: 3rem;"></span>
+                            <p>No tenants added yet.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detail Panel -->
+            <div class="col-md-5 detail-panel" id="tenant-detail-panel">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <button type="button" id="close-detail-panel" class="close" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h3 class="panel-title" id="detail-tenant-name">New Tenant</h3>
+                    </div>
+                    <div class="panel-body">
+                        <form id="tenant-form">
+                            <input type="hidden" id="tenant-id">
+                            <input type="hidden" id="tenant-property-id">
+                            <div class="form-group" id="billing-id-group" style="display: none;">
+                                <label>Billing ID</label>
+                                <p class="form-control-static" id="tenant-billing-id"></p>
+                            </div>
+                            <div class="form-group"><label for="tenant-name">Full Name</label><input type="text" id="tenant-name" class="form-control" required></div>
+                            <div class="form-group"><label for="tenant-email">Email</label><input type="email" id="tenant-email" class="form-control" required></div>
+                            <div class="form-group"><label for="tenant-property">Assign to Property</label><select id="tenant-property" class="form-control" required></select></div>
+                            <div class="form-group"><label for="tenant-lease-end">Lease End Date</label><input type="date" id="tenant-lease-end" class="form-control"></div>
+                        </form>
+                        <hr>
+                        <div id="tenant-maintenance-history"></div>
+                    </div>
+                    <div class="panel-footer">
+                        <button id="delete-tenant-btn" class="btn btn-danger">Remove Tenant</button>
+                        <button type="submit" form="tenant-form" class="btn btn-primary pull-right">Save Changes</button>
+                        <div class="clearfix"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="main.js"></script>
+    <script src="tenants.js"></script>
+</body>
+</html>

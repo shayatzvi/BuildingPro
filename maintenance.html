@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maintenance - Property Management</title>
+    <!-- Bootstrap 3 -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <style>
+        body { padding-top: 70px; }
+        .detail-panel { display: none; }
+        .page-header { margin-top: 0; }
+        .status-tag { display: inline-block; padding: 2px 8px; border-radius: 10px; color: #fff; }
+        .status-tag[data-status="open"] { background-color: #d9534f; }
+        .status-tag[data-status="in-progress"] { background-color: #f0ad4e; }
+        .status-tag[data-status="closed"] { background-color: #5cb85c; }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-default navbar-fixed-top">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">PropSys</a>
+            </div>
+            <div class="collapse navbar-collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="dashboard.html">Dashboard</a></li>
+                    <li><a href="properties.html">Properties</a></li>
+                    <li><a href="tenants.html">Tenants</a></li>
+                    <li class="active"><a href="maintenance.html">Maintenance</a></li>
+                    <li><a href="billing.html">Billing</a></li>
+                    <li><a href="admin.html">Admin</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="#"><span id="user-email"></span></a></li>
+                    <li><a href="#" id="logout-button">Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Master View -->
+            <div class="col-md-12 master-view">
+                <div class="page-header">
+                    <div class="pull-right">
+                        <button id="add-request-btn" class="btn btn-primary">
+                            <span class="glyphicon glyphicon-plus"></span> Add Request
+                        </button>
+                    </div>
+                    <h1>Maintenance</h1>
+                </div>
+                <div class="panel panel-default">
+                    <div class="panel-body">
+                        <table class="table table-hover">
+                            <thead><tr><th>Property</th><th>Issue</th><th>Priority</th><th>Status</th></tr></thead>
+                            <tbody id="requests-list"></tbody>
+                        </table>
+                        <div id="empty-requests-state" class="text-center" style="display: none; padding: 2rem;">
+                            <span class="glyphicon glyphicon-wrench" style="font-size: 3rem;"></span>
+                            <p>No maintenance requests yet.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detail Panel -->
+            <div class="col-md-5 detail-panel" id="request-detail-panel">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <button type="button" id="close-detail-panel" class="close" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h3 class="panel-title" id="detail-request-issue">New Request</h3>
+                    </div>
+                    <div class="panel-body">
+                        <form id="request-form">
+                            <input type="hidden" id="request-id">
+                            <div class="form-group"><label for="request-property">Property</label><select id="request-property" class="form-control" required></select></div>
+                            <div class="form-group"><label for="request-issue">Issue Description</label><input type="text" id="request-issue" class="form-control" required></div>
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <div class="form-group"><label for="request-priority">Priority</label><select id="request-priority" class="form-control" required><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select></div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="form-group"><label for="request-status">Status</label><select id="request-status" class="form-control" required><option value="open">Open</option><option value="in-progress">In Progress</option><option value="closed">Closed</option></select></div>
+                                </div>
+                            </div>
+                        </form>
+                        <hr>
+                        <div id="notes-section" style="display: none;"></div>
+                        <div id="costs-section" style="display: none;">
+                            <h4>Costs</h4>
+                            <table id="costs-list" class="table table-condensed"></table>
+                            <form id="add-cost-form" class="form-inline">
+                                <div class="form-group">
+                                    <input type="text" id="cost-description" class="form-control" placeholder="e.g., New Faucet">
+                                </div>
+                                <div class="form-group">
+                                    <div class="input-group">
+                                        <div class="input-group-addon">$</div>
+                                        <input type="number" id="cost-amount" class="form-control" placeholder="100.00" step="0.01">
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-default btn-sm">Add Cost</button>
+                            </form>
+                        </div>
+                        <div id="notes-section" style="display: none;">
+                            <h4>Notes</h4>
+                            <div id="notes-list"></div>
+                            <form id="add-note-form">
+                                <div class="input-group">
+                                    <input type="text" id="note-text" class="form-control" placeholder="Add a new note...">
+                                    <span class="input-group-btn"><button class="btn btn-default" type="submit">Add</button></span>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="panel-footer">
+                        <button id="delete-request-btn" class="btn btn-danger">Delete Request</button>
+                        <button type="submit" form="request-form" class="btn btn-primary pull-right">Save Changes</button>
+                        <div class="clearfix"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="main.js"></script>
+    <script src="maintenance.js"></script>
+</body>
+</html>

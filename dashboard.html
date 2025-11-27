@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Property Management</title>
+    <!-- Bootstrap 3 -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <style>
+        body { padding-top: 70px; }
+        .summary-card { text-align: center; }
+        .summary-card h3 { font-size: 2.5em; }
+        .status-tag { display: inline-block; padding: 2px 8px; border-radius: 10px; color: #fff; }
+        .status-tag[data-status="overdue"] { background-color: #d9534f; }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-default navbar-fixed-top">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">PropSys</a>
+            </div>
+            <div class="collapse navbar-collapse">
+                <ul class="nav navbar-nav">
+                    <li class="active"><a href="dashboard.html">Dashboard</a></li>
+                    <li><a href="properties.html">Properties</a></li>
+                    <li><a href="tenants.html">Tenants</a></li>
+                    <li><a href="maintenance.html">Maintenance</a></li>
+                    <li><a href="billing.html">Billing</a></li>
+                    <li><a href="admin.html">Admin</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="#"><span id="user-email"></span></a></li>
+                    <li><a href="#" id="logout-button">Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="page-header">
+            <h1>Dashboard</h1>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="panel panel-default summary-card">
+                    <div class="panel-body">
+                        <h3 id="total-properties">0</h3>
+                        <p>Total Properties</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="panel panel-default summary-card">
+                    <div class="panel-body">
+                        <h3 id="total-tenants">0</h3>
+                        <p>Total Tenants</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="panel panel-default summary-card">
+                    <div class="panel-body">
+                        <h3 id="occupancy-rate">0%</h3>
+                        <p>Occupancy Rate</p>
+                        <div class="chart-container" style="height: 120px;">
+                            <canvas id="occupancy-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="panel panel-default summary-card">
+                    <div class="panel-body">
+                        <h3 id="total-rent">$0</h3>
+                        <p>Collected Payments</p>
+                        <div class="chart-container" style="height: 120px;">
+                            <canvas id="rent-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Lists -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">Overdue Invoices</div>
+                    <div class="panel-body">
+                        <table class="table table-striped">
+                            <thead><tr><th>Tenant</th><th>Amount</th><th>Due Date</th></tr></thead>
+                            <tbody id="overdue-invoices-list"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">Open Maintenance Requests</div>
+                    <div class="panel-body">
+                        <table class="table table-striped">
+                            <thead><tr><th>Property</th><th>Issue</th></tr></thead>
+                            <tbody id="open-requests-list"></tbody>
+                        </table>
+                    </div>
+                    <div class="panel-footer text-right">
+                        <a href="maintenance.html" class="btn btn-sm btn-default">View All Maintenance</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="main.js"></script>
+    <script src="dashboard.js"></script>
+
+</body>
+</html>

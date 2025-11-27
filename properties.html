@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Properties - Property Management</title>
+    <!-- Bootstrap 3 -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <style>
+        body { padding-top: 70px; }
+        .detail-panel { display: none; }
+        .page-header { margin-top: 0; }
+        .status-tag { display: inline-block; padding: 2px 8px; border-radius: 10px; color: #fff; }
+        .status-tag[data-status="vacant"] { background-color: #5cb85c; }
+        .status-tag[data-status="occupied"] { background-color: #f0ad4e; }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-default navbar-fixed-top">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">PropSys</a>
+            </div>
+            <div class="collapse navbar-collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="dashboard.html">Dashboard</a></li>
+                    <li class="active"><a href="properties.html">Properties</a></li>
+                    <li><a href="tenants.html">Tenants</a></li>
+                    <li><a href="maintenance.html">Maintenance</a></li>
+                    <li><a href="billing.html">Billing</a></li>
+                    <li><a href="admin.html">Admin</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="#"><span id="user-email"></span></a></li>
+                    <li><a href="#" id="logout-button">Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Master View -->
+            <div class="col-md-12 master-view">
+                <div class="page-header">
+                    <div class="pull-right">
+                        <button id="add-property-btn" class="btn btn-primary">
+                            <span class="glyphicon glyphicon-plus"></span> Add Property
+                        </button>
+                    </div>
+                    <h1>Properties</h1>
+                </div>
+
+                <div class="panel panel-default">
+                    <div class="panel-body">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Address</th>
+                                    <th>Beds/Baths</th>
+                                    <th>Rent</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="properties-list"></tbody>
+                        </table>
+                        <div id="empty-properties-state" class="text-center" style="display: none; padding: 2rem;">
+                            <span class="glyphicon glyphicon-home" style="font-size: 3rem;"></span>
+                            <p>No properties added yet.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detail Panel -->
+            <div class="col-md-5 detail-panel" id="property-detail-panel">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <button type="button" id="close-detail-panel" class="close" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h3 class="panel-title" id="detail-property-address">New Property</h3>
+                    </div>
+                    <div class="panel-body">
+                        <form id="property-form">
+                            <div class="form-group">
+                                <label for="property-address">Address</label>
+                                <input type="text" id="property-address" class="form-control" required>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-4">
+                                    <div class="form-group"><label for="property-rent">Monthly Rent ($)</label><input type="number" id="property-rent" class="form-control"></div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="form-group"><label for="property-beds">Beds</label><input type="number" id="property-beds" class="form-control"></div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="form-group"><label for="property-baths">Baths</label><input type="number" id="property-baths" class="form-control"></div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="property-notes">Notes</label>
+                                <textarea id="property-notes" rows="3" class="form-control"></textarea>
+                            </div>
+                        </form>
+                        <hr>
+                        <!-- Related Data Sections -->
+                        <div id="property-tenant-info"></div>
+                        <div id="property-maintenance-requests"></div>
+                        <div id="property-financials"></div>
+                    </div>
+                    <div class="panel-footer">
+                        <button id="delete-property-btn" class="btn btn-danger">Delete Property</button>
+                        <button type="submit" form="property-form" class="btn btn-primary pull-right">Save Changes</button>
+                        <div class="clearfix"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="main.js"></script>
+    <script src="properties.js"></script>
+
+</body>
+</html>

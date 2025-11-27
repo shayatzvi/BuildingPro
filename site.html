@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Announcements</title>
+    <!-- Bootstrap 3 -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <style> body { padding-top: 20px; } </style>
+</head>
+<body class="container">
+
+    <div class="page-header">
+        <h1>Announcements</h1>
+    </div>
+
+    <div id="public-announcements-list" class="list-group">
+        <!-- Public announcements will be loaded here -->
+    </div>
+
+    <hr>
+
+    <div class="row">
+        <div class="col-md-6 col-md-offset-3">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Portal Login</h3>
+                </div>
+                <div class="panel-body">
+                    <p>Please sign in to access your account details and invoices.</p>
+                    <form id="tenant-login-form" style="margin-top: 1.5rem;">
+                        <input type="hidden" id="company-id">
+                        <div class="form-group"><label for="tenant-login-email">Your Email Address</label><input type="email" id="tenant-login-email" class="form-control" required></div>
+                        <div class="form-group"><label for="tenant-login-billing-id">Your Billing ID #</label><input type="text" id="tenant-login-billing-id" class="form-control" required></div>
+                        <div id="tenant-login-error" class="alert alert-danger" style="display: none;"></div>
+                        <button type="submit" class="btn btn-primary">Sign In</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <script src="firebase-config.js"></script>
+    <script src="tenant-auth.js"></script>
+
+</body>
+</html>

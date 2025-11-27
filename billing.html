@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billing - Property Management</title>
+    <!-- Bootstrap 3 -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <style>
+        body { padding-top: 70px; }
+        .detail-panel { display: none; }
+        .detail-panel.visible { display: block; }
+        .page-header { margin-top: 0; }
+        .status-tag { display: inline-block; padding: 2px 8px; border-radius: 10px; color: #fff; }
+        .status-tag[data-status="due"] { background-color: #f0ad4e; }
+        .status-tag[data-status="paid"] { background-color: #5cb85c; }
+        .status-tag[data-status="overdue"] { background-color: #d9534f; }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #invoice-print-area, #invoice-print-area * {
+                visibility: visible;
+            }
+            #invoice-detail-panel .modal-dialog {
+                width: 100%;
+                margin: 0;
+            }
+            #invoice-detail-panel .modal-content {
+                border: none;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-default navbar-fixed-top">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">PropSys</a>
+            </div>
+            <div class="collapse navbar-collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="dashboard.html">Dashboard</a></li>
+                    <li><a href="properties.html">Properties</a></li>
+                    <li><a href="tenants.html">Tenants</a></li>
+                    <li><a href="maintenance.html">Maintenance</a></li>
+                    <li class="active"><a href="billing.html">Billing</a></li>
+                    <li><a href="admin.html">Admin</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="#"><span id="user-email"></span></a></li>
+                    <li><a href="#" id="logout-button">Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Master View -->
+            <div class="col-md-12 master-view">
+                <div class="page-header">
+                    <div class="pull-right">
+                        <button id="add-invoice-btn" class="btn btn-primary">
+                            <span class="glyphicon glyphicon-plus"></span> Add Invoice
+                        </button>
+                    </div>
+                    <h1>Billing & Invoices</h1>
+                </div>
+
+                <div class="panel panel-default">
+                    <div class="panel-body">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Tenant</th>
+                                    <th>Property</th>
+                                    <th>Amount</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="invoices-list"></tbody>
+                        </table>
+                        <div id="empty-invoices-state" class="text-center" style="display: none; padding: 2rem;">
+                            <span class="glyphicon glyphicon-duplicate" style="font-size: 3rem;"></span>
+                            <p>No invoices found.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Add/Edit Invoice Modal -->
+    <div class="modal fade" id="invoice-modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form id="invoice-form">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title">New Invoice</h4>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="invoice-id">
+                        <div class="form-group">
+                            <label for="invoice-tenant">Tenant</label>
+                            <select id="invoice-tenant" class="form-control" required></select>
+                        </div>
+                        <div id="alternate-address-group" style="display: none;">
+                            <div class="checkbox">
+                                <label><input type="checkbox" id="use-alternate-address"> Use a different billing address?</label>
+                            </div>
+                            <div class="form-group" id="alternate-address-field" style="display: none; margin-top: 10px;">
+                                <textarea id="alternate-address" class="form-control" rows="3" placeholder="Enter custom billing address"></textarea>
+                            </div>
+                        </div>
+                        <div id="custom-client-fields" style="display: none;">
+                            <div class="form-group">
+                                <label for="custom-client-name">Billed To Name</label>
+                                <input type="text" id="custom-client-name" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label for="custom-client-address">Billing Address</label>
+                                <textarea id="custom-client-address" rows="3" class="form-control"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="invoice-due-date">Due Date</label>
+                            <input type="date" id="invoice-due-date" class="form-control" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Line Items</label>
+                            <table class="table table-condensed">
+                                <tbody id="line-items-table"></tbody>
+                            </table>
+                            <button type="button" id="add-line-item-btn" class="btn btn-sm btn-default">
+                                <span class="glyphicon glyphicon-plus"></span> Add Line Item
+                            </button>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="pull-left">
+                            <strong>Total:</strong>
+                            <span id="invoice-total">$0.00</span>
+                        </div>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Create Invoice</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="main.js"></script>
+    <script src="billing.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Property Management</title>
+    <!-- Bootstrap 3 -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <style>
+        body { padding-top: 70px; }
+        .page-header { margin-top: 0; }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-default navbar-fixed-top">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">PropSys</a>
+            </div>
+            <div class="collapse navbar-collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="dashboard.html">Dashboard</a></li>
+                    <li><a href="properties.html">Properties</a></li>
+                    <li><a href="tenants.html">Tenants</a></li>
+                    <li><a href="maintenance.html">Maintenance</a></li>
+                    <li><a href="billing.html">Billing</a></li>
+                    <li class="active"><a href="admin.html">Admin</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="#"><span id="user-email"></span></a></li>
+                    <li><a href="#" id="logout-button">Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="page-header">
+            <h1>Admin Settings</h1>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">Your Tenant Portal Link</div>
+                    <div class="panel-body">
+                        <p>Share this unique link with your tenants so they can log in to their portal.</p>
+                        <div class="input-group">
+                            <input type="text" id="tenant-portal-link" class="form-control" readonly>
+                            <span class="input-group-btn">
+                                <button id="copy-link-btn" class="btn btn-default" type="button">
+                                    <span class="glyphicon glyphicon-copy"></span> Copy
+                                </button>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel panel-default">
+                    <div class="panel-heading">Company Profile for Invoices</div>
+                    <div class="panel-body">
+                        <p>This information will appear on your invoices.</p>
+                        <form id="company-profile-form">
+                            <div class="form-group">
+                                <label for="company-name">Company Name</label>
+                                <input type="text" id="company-name" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label for="company-address">Company Address</label>
+                                <textarea id="company-address" rows="3" class="form-control" placeholder="123 Business Rd&#10;Suite 100&#10;City, State 12345"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Profile</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">Manage Public Announcements</div>
+                    <div class="panel-body">
+                        <p>Post announcements that will be visible to everyone on the tenant portal page.</p>
+                        <form id="announcement-form">
+                            <input type="hidden" id="announcement-id">
+                            <div class="form-group"><label for="announcement-title">Title</label><input type="text" id="announcement-title" class="form-control" required></div>
+                            <div class="form-group"><label for="announcement-content">Content</label><textarea id="announcement-content" rows="4" class="form-control" required></textarea></div>
+                            <button type="submit" class="btn btn-primary">Save Announcement</button>
+                            <button type="button" id="clear-announcement-form" class="btn btn-link" style="display: none;">Cancel Edit</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div id="announcements-list" class="list-group" style="margin-top: 2rem;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="main.js"></script>
+    <script src="admin.js"></script>
+
+</body>
+</html>
