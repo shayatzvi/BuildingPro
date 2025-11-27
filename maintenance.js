@@ -5,8 +5,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeDetailPanelBtn = document.getElementById('close-detail-panel');
     const requestForm = document.getElementById('request-form');
     const deleteRequestBtn = document.getElementById('delete-request-btn');
-    const addNoteForm = document.getElementById('add-note-form');
-    const addCostForm = document.getElementById('add-cost-form');
 
     let currentUserId;
     let currentRequestId;
@@ -23,8 +21,6 @@ document.addEventListener('DOMContentLoaded', () => {
     requestsList.addEventListener('click', handleRowClick);
     requestForm.addEventListener('submit', handleFormSubmit);
     deleteRequestBtn.addEventListener('click', handleDelete);
-    addNoteForm.addEventListener('submit', handleAddNote);
-    addCostForm.addEventListener('submit', handleAddCost);
 
     function handleAddNew() {
         currentRequestId = null;
@@ -32,8 +28,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('detail-request-issue').textContent = 'New Request';
         loadAllProperties(currentUserId);
         openPanel();
-        document.getElementById('notes-section').style.display = 'none';
-        document.getElementById('costs-section').style.display = 'none';
 
     }
 
@@ -43,8 +37,6 @@ document.addEventListener('DOMContentLoaded', () => {
             currentRequestId = row.dataset.id;
             loadRequestDetails(currentRequestId);
             openPanel();
-            document.getElementById('notes-section').style.display = 'block';
-            document.getElementById('costs-section').style.display = 'block';
         }
     }
 
@@ -85,49 +77,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function handleAddNote(e) {
-        e.preventDefault();
-        if (!currentRequestId) return;
-
-        const noteText = document.getElementById('note-text').value;
-        if (!noteText) return;
-
-        const newNote = {
-            text: noteText,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-
-        db.collection('users').doc(currentUserId).collection('maintenance').doc(currentRequestId).update({
-            notes: firebase.firestore.FieldValue.arrayUnion(newNote)
-        }).then(() => {
-            console.log('Note added.');
-            document.getElementById('add-note-form').reset();
-        }).catch(err => console.error('Error adding note:', err));
-
-    }
-
-    function handleAddCost(e) {
-        e.preventDefault();
-        if (!currentRequestId) return;
-
-        const description = document.getElementById('cost-description').value;
-        const amount = parseFloat(document.getElementById('cost-amount').value);
-
-        if (!description || !amount) return;
-
-        const newCost = {
-            description,
-            amount,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-
-        db.collection('users').doc(currentUserId).collection('maintenance').doc(currentRequestId).update({
-            costs: firebase.firestore.FieldValue.arrayUnion(newCost)
-        }).then(() => {
-            addCostForm.reset();
-        }).catch(err => console.error('Error adding cost:', err));
-    }
-
     function openPanel() {
         document.querySelector('.master-view').className = 'col-md-7 master-view';
         detailPanel.style.display = 'block';
@@ -149,8 +98,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('request-priority').value = request.priority;
                 document.getElementById('request-status').value = request.status;
                 loadAllProperties(currentUserId, request.propertyId);
-                loadNotes(request.notes);
-                loadCosts(request.costs);
             }
         });
     }
@@ -168,56 +115,6 @@ function loadAllProperties(userId, currentPropertyId) {
         });
         propertySelect.innerHTML = optionsHtml;
     });
-}
-
-function loadNotes(notes) {
-    const notesList = document.getElementById('notes-list');
-    notesList.innerHTML = '';
-    if (notes && notes.length > 0) {
-        // Sort notes by date, newest first
-        const sortedNotes = notes.sort((a, b) => b.createdAt.seconds - a.createdAt.seconds);
-
-        sortedNotes.forEach(note => {
-            const date = note.createdAt.toDate().toLocaleString();
-            notesList.insertAdjacentHTML('afterbegin', `
-                <div class="panel panel-default panel-body" style="margin-bottom: 10px;">
-                    ${note.text}
-                    <small class="text-muted pull-right">${date}</small>
-                </div>
-            `);
-        });
-    }
-}
-
-function loadCosts(costs) {
-    const costsList = document.getElementById('costs-list');
-    if (!costs || costs.length === 0) {
-        costsList.innerHTML = '<tbody><tr><td colspan="2">No costs added yet.</td></tr></tbody>';
-        return;
-    }
-
-    let totalCost = 0;
-    let tableHtml = '<tbody>';
-    costs.forEach(cost => {
-        totalCost += cost.amount;
-        tableHtml += `
-            <tr>
-                <td>${cost.description}</td>
-                <td style="text-align: right;">$${cost.amount.toFixed(2)}</td>
-            </tr>
-        `;
-    });
-
-    tableHtml += `
-        </tbody>
-        <tfoot>
-            <tr>
-                <td style="text-align: right; font-weight: bold;">Total Cost</td>
-                <td style="text-align: right; font-weight: bold;">$${totalCost.toFixed(2)}</td>
-            </tr>
-        </tfoot>
-    `;
-    costsList.innerHTML = tableHtml;
 }
 
 function listenForRequests(userId) {

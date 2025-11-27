@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - PropSys</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        .login-form {
+            max-width: 380px;
+            padding: 15px;
+            margin: auto;
+        }
+        .form-signin-heading {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <form id="login-form" class="login-form">
+            <h2 class="form-signin-heading">PropSys Login</h2>
+            <div id="login-error" class="alert alert-danger" style="display: none;"></div>
+            <div class="form-group">
+                <label for="login-email" class="sr-only">Email address</label>
+                <input type="email" id="login-email" class="form-control" placeholder="Email address" required autofocus>
+            </div>
+            <div class="form-group">
+                <label for="login-password" class="sr-only">Password</label>
+                <input type="password" id="login-password" class="form-control" placeholder="Password" required>
+            </div>
+            <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+            <p class="text-center" style="margin-top: 20px;">
+                Don't have an account? <a href="signup.html">Sign up</a>
+            </p>
+        </form>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script>
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const loginError = document.getElementById('login-error');
+
+            // Hide error on new submission
+            loginError.style.display = 'none';
+
+            firebase.auth().signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // Signed in successfully
+                    console.log('User signed in:', userCredential.user);
+                    // Redirect to a dashboard or home page
+                    window.location.href = 'dashboard.html'; // You can change this to your desired page
+                })
+                .catch((error) => {
+                    // Handle Errors here.
+                    loginError.textContent = error.message;
+                    loginError.style.display = 'block';
+                });
+        });
+    </script>
+</body>
+</html>

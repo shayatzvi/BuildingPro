@@ -10,25 +10,10 @@
 </head>
 <body class="login-page light-theme">
 
-    <main class="login-container">
-        <div class="card">
-            <h1>Property Manager</h1>
-            <p>Please sign in to continue</p>
-            <form id="login-form">
-                <div class="input-field">
-                    <input type="email" id="login-email" required>
-                    <label for="login-email">Email</label>
-                </div>
-                <div class="input-field">
-                    <input type="password" id="login-password" required>
-                    <label for="login-password">Password</label>
-                </div>
-                <p id="login-error" class="error-message"></p>
-                <button type="submit" class="button-primary">Sign In</button>
-                <p class="form-switch-text">Don't have an account? <a href="signup.html">Sign Up</a></p>
-            </form>
-        </div>
-    </main>
+      <script>
+        // Automatically redirect to the primary login page.
+        window.location.href = "login.html";
+    </script>
 
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>

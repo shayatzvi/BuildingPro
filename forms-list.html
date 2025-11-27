@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forms - PropSys</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <style>
+        body { padding-top: 70px; }
+        .page-header { margin-top: 0; }
+        .form-actions {
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-default navbar-fixed-top">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">PropSys</a>
+            </div>
+            <div class="collapse navbar-collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="dashboard.html">Dashboard</a></li>
+                    <li><a href="properties.html">Properties</a></li>
+                    <li><a href="tenants.html">Tenants</a></li>
+                    <li><a href="maintenance.html">Maintenance</a></li>
+                    <li><a href="billing.html">Billing</a></li>
+                    <li class="active"><a href="forms-list.html">Forms</a></li>
+                    <li><a href="admin.html">Admin</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="#" id="logout-button">Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="page-header">
+            <div class="pull-right">
+                <a href="form-builder.html" class="btn btn-primary">
+                    <span class="glyphicon glyphicon-plus"></span> Create New Form
+                </a>
+            </div>
+            <h1>Forms</h1>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Description</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="forms-list"></tbody>
+                </table>
+                <div id="empty-forms-state" class="text-center" style="display: none; padding: 2rem;">
+                    <span class="glyphicon glyphicon-list-alt" style="font-size: 3rem;"></span>
+                    <p>No forms created yet.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const db = firebase.firestore();
+            const formsList = document.getElementById('forms-list');
+            const emptyState = document.getElementById('empty-forms-state');
+
+            db.collection('forms').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+                if (snapshot.empty) {
+                    emptyState.style.display = 'block';
+                    formsList.innerHTML = '';
+                    return;
+                }
+                emptyState.style.display = 'none';
+                let html = '';
+                snapshot.forEach(doc => {
+                    const form = doc.data();
+                    const formLink = `public-form.html?id=${doc.id}`;
+                    html += `<tr><td>${form.title}</td><td>${form.description}</td><td>${form.createdAt.toDate().toLocaleDateString()}</td><td class="form-actions"><a href="${formLink}" target="_blank" class="btn btn-sm btn-default">View Public Form</a></td></tr>`;
+                });
+                formsList.innerHTML = html;
+            });
+        });
+    </script>
+</body>
+</html>
+
