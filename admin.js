@@ -7,6 +7,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const companyProfileForm = document.getElementById('company-profile-form');
 
     let currentUserId;
+    let quill;
+
+    // Initialize Quill editor
+    quill = new Quill('#announcement-content', {
+        theme: 'snow',
+        modules: { toolbar: [['bold', 'italic'], [{ 'header': 2 }, { 'header': 3 }], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['link']] }
+    });
 
     auth.onAuthStateChanged(user => {
         if (user) {
@@ -36,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     announcementForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const title = document.getElementById('announcement-title').value;
-        const content = document.getElementById('announcement-content').value;
+        const content = quill.root.innerHTML;
         const id = document.getElementById('announcement-id').value;
 
         const data = {
@@ -69,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const data = doc.data();
                     document.getElementById('announcement-id').value = doc.id;
                     document.getElementById('announcement-title').value = data.title;
-                    document.getElementById('announcement-content').value = data.content;
+                    quill.root.innerHTML = data.content;
                     clearAnnouncementFormBtn.style.display = 'inline-block';
                 }
             });
@@ -99,6 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function resetAnnouncementForm() {
         announcementForm.reset();
+        quill.setText('');
         document.getElementById('announcement-id').value = '';
         clearAnnouncementFormBtn.style.display = 'none';
     }
@@ -120,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <button class="btn btn-xs btn-danger delete-btn">Delete</button>
                             </div>
                             <h4 class="list-group-item-heading">${announcement.title}</h4>
-                            <p class="list-group-item-text">${announcement.content}</p>
+                            <div class="list-group-item-text">${announcement.content}</div>
                         </div>
                     `;
                 });

@@ -47,6 +47,39 @@
     
     <script src="firebase-config.js"></script>
     <script src="tenant-auth.js"></script>
+    <script>
+        // This script is separate from tenant-auth.js to handle public data
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const companyId = params.get('company');
+            const announcementsList = document.getElementById('public-announcements-list');
+
+            if (companyId && announcementsList) {
+                db.collection('users').doc(companyId).collection('announcements').orderBy('createdAt', 'desc').limit(5)
+                    .onSnapshot(snapshot => {
+                        let html = '';
+                        if (snapshot.empty) {
+                            announcementsList.innerHTML = '<div class="list-group-item"><p class="list-group-item-text">No announcements at this time.</p></div>';
+                            return;
+                        }
+                        snapshot.forEach(doc => {
+                            const announcement = doc.data();
+                            html += `
+                                <div class="list-group-item">
+                                    <h4 class="list-group-item-heading">${announcement.title}</h4>
+                                    <div class="list-group-item-text">${announcement.content}</div>
+                                    <p class="text-muted" style="margin-top: 10px; font-size: 12px;">Posted on ${announcement.createdAt.toDate().toLocaleDateString()}</p>
+                                </div>
+                            `;
+                        });
+                        announcementsList.innerHTML = html;
+                    }, err => {
+                        console.error("Error fetching public announcements:", err);
+                        announcementsList.innerHTML = '<div class="list-group-item"><p class="list-group-item-text text-danger">Could not load announcements.</p></div>';
+                    });
+            }
+        });
+    </script>
 
 </body>
 </html>

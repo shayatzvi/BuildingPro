@@ -94,16 +94,24 @@ document.addEventListener('DOMContentLoaded', () => {
         const propertyId = document.getElementById('tenant-property-id').value;
         if (confirm('Are you sure you want to remove this tenant? This will set their assigned property to "vacant".')) {
             const tenantRef = db.collection('users').doc(currentUserId).collection('tenants').doc(currentTenantId);
-            const propertyRef = db.collection('users').doc(currentUserId).collection('properties').doc(propertyId);
 
-            const batch = db.batch();
-            batch.delete(tenantRef);
-            batch.update(propertyRef, { status: 'vacant' });
-
-            batch.commit().then(() => {
-                console.log('Tenant removed and property updated.');
-                closePanel();
-            }).catch(err => console.error(err));
+            if (propertyId) {
+                // Tenant is assigned to a property, update property status in a batch
+                const propertyRef = db.collection('users').doc(currentUserId).collection('properties').doc(propertyId);
+                const batch = db.batch();
+                batch.delete(tenantRef);
+                batch.update(propertyRef, { status: 'vacant' });
+                batch.commit().then(() => {
+                    console.log('Tenant removed and property updated.');
+                    closePanel();
+                }).catch(err => console.error('Error removing tenant and updating property:', err));
+            } else {
+                // Tenant is not assigned to a property, just delete the tenant
+                tenantRef.delete().then(() => {
+                    console.log('Tenant removed.');
+                    closePanel();
+                }).catch(err => console.error('Error removing tenant:', err));
+            }
         }
     }
 
@@ -142,7 +150,7 @@ function loadVacantProperties(userId, currentPropertyId) {
     const propertySelect = document.getElementById('tenant-property');
     // Get all properties to populate dropdown
     db.collection('users').doc(userId).collection('properties').get().then(snapshot => {
-        let optionsHtml = '<option value="">Select a property...</option>';
+        let optionsHtml = '<option value="">NOT CURRENTLY IN</option>';
         snapshot.forEach(doc => {
             const property = doc.data();
             // A property is available if it's vacant OR it's the one currently assigned to this tenant
