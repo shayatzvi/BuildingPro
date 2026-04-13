@@ -1,0 +1,21 @@
+{
+  "short_name": "PropManage",
+  "name": "Property Management Pro",
+  "description": "Streamlined property management and maintenance tracking.",
+  "icons": [
+    {
+      "src": "https://img.icons8.com/fluency/192/home.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://img.icons8.com/fluency/512/home.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#2c3e50",
+  "background_color": "#ffffff"
+}
