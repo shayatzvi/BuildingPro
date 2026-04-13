@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maintenance Request</title>
+    <!-- Bootstrap 3 -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <style>
+        body { background-color: #f5f5f5; }
+        .print-container { max-width: 800px; margin: 30px auto; background-color: #fff; padding: 40px; border: 1px solid #ddd; box-shadow: 0 0 10px rgba(0,0,0,0.05); }
+        .print-header { padding-bottom: 20px; border-bottom: 2px solid #eee; margin-bottom: 30px; }
+        .print-button-container { text-align: center; margin-bottom: 20px; }
+        .detail-row { margin-bottom: 15px; border-bottom: 1px solid #f9f9f9; padding-bottom: 10px; }
+        .detail-label { font-weight: bold; color: #777; text-transform: uppercase; font-size: 12px; }
+        .detail-value { font-size: 16px; margin-top: 5px; }
+        
+        @media print {
+            body { background-color: #fff; }
+            .print-button-container { display: none; }
+            .print-container { margin: 0; padding: 0; border: none; box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="print-button-container">
+            <button class="btn btn-primary btn-lg" onclick="window.print()">
+                <span class="glyphicon glyphicon-print"></span> Print Request
+            </button>
+        </div>
+
+        <div class="print-container">
+            <div class="print-header row">
+                <div class="col-xs-7">
+                    <h3 id="company-name">Loading...</h3>
+                    <address id="company-address"></address>
+                </div>
+                <div class="col-xs-5 text-right">
+                    <h2>Work Order</h2>
+                    <p><strong>Order #:</strong> <span id="display-id"></span></p>
+                    <p><strong>Date:</strong> <span id="display-date"></span></p>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-xs-12">
+                    <div class="detail-row">
+                        <div class="detail-label">Property Address</div>
+                        <div class="detail-value" id="display-address"></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Issue Description</div>
+                        <div class="detail-value" id="display-issue" style="white-space: pre-wrap;"></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-xs-6">
+                            <div class="detail-row">
+                                <div class="detail-label">Priority</div>
+                                <div class="detail-value text-capitalize" id="display-priority"></div>
+                            </div>
+                        </div>
+                        <div class="col-xs-6">
+                            <div class="detail-row">
+                                <div class="detail-label">Status</div>
+                                <div class="detail-value text-capitalize" id="display-status"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 50px; border-top: 1px solid #eee; padding-top: 20px;">
+                <div class="row">
+                    <div class="col-xs-6">
+                        <p><strong>Technician Signature:</strong> _________________________</p>
+                    </div>
+                    <div class="col-xs-6 text-right">
+                        <p><strong>Date Completed:</strong> _________________________</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const db = firebase.firestore();
+            const urlParams = new URLSearchParams(window.location.search);
+            const requestId = urlParams.get('id');
+            const companyId = urlParams.get('company');
+
+            if (!requestId || !companyId) return;
+
+            db.collection('users').doc(companyId).collection('profile').doc('info').get().then(doc => {
+                if (doc.exists) {
+                    const profile = doc.data();
+                    document.getElementById('company-name').textContent = profile.companyName || 'Property Management';
+                    document.getElementById('company-address').innerHTML = profile.companyAddress ? profile.companyAddress.replace(/\n/g, '<br>') : '';
+                }
+            });
+
+            db.collection('users').doc(companyId).collection('maintenance').doc(requestId).get().then(doc => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    document.getElementById('display-id').textContent = doc.id.substring(0, 8).toUpperCase();
+                    document.getElementById('display-date').textContent = data.createdAt ? data.createdAt.toDate().toLocaleDateString() : 'N/A';
+                    document.getElementById('display-address').textContent = data.propertyAddress;
+                    document.getElementById('display-issue').textContent = data.issue;
+                    document.getElementById('display-priority').textContent = data.priority;
+                    document.getElementById('display-status').textContent = data.status;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

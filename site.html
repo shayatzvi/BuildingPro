@@ -21,7 +21,7 @@
     <hr>
 
     <div class="row">
-        <div class="col-md-6 col-md-offset-3">
+        <div class="col-md-6">
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">Portal Login</h3>
@@ -38,6 +38,37 @@
                 </div>
             </div>
         </div>
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Report a Maintenance Issue</h3>
+                </div>
+                <div class="panel-body">
+                    <p>Report an issue directly to management. No login required.</p>
+                    <form id="public-maintenance-form" style="margin-top: 1.5rem;">
+                        <div class="form-group">
+                            <label for="public-property">Property/Unit</label>
+                            <select id="public-property" class="form-control" required>
+                                <option value="">Loading units...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="public-issue">Issue Description</label>
+                            <textarea id="public-issue" class="form-control" rows="3" required placeholder="Describe the problem (e.g., leaky faucet in the kitchen)"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="public-priority">Priority</label>
+                            <select id="public-priority" class="form-control" required>
+                                <option value="low">Low - Not urgent</option>
+                                <option value="medium" selected>Medium - Needs attention</option>
+                                <option value="high">High - Urgent</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-warning btn-block">Submit Report</button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Firebase SDKs -->
@@ -50,11 +81,13 @@
     <script>
         // This script is separate from tenant-auth.js to handle public data
         document.addEventListener('DOMContentLoaded', () => {
+            const db = firebase.firestore();
             const params = new URLSearchParams(window.location.search);
             const companyId = params.get('company');
             const announcementsList = document.getElementById('public-announcements-list');
 
-            if (companyId && announcementsList) {
+            if (companyId) {
+                if (announcementsList) {
                 db.collection('users').doc(companyId).collection('announcements').orderBy('createdAt', 'desc').limit(5)
                     .onSnapshot(snapshot => {
                         let html = '';
@@ -77,6 +110,44 @@
                         console.error("Error fetching public announcements:", err);
                         announcementsList.innerHTML = '<div class="list-group-item"><p class="list-group-item-text text-danger">Could not load announcements.</p></div>';
                     });
+                }
+
+                // --- Public Maintenance Logic ---
+                const propertySelect = document.getElementById('public-property');
+                const maintenanceForm = document.getElementById('public-maintenance-form');
+
+                // Load units
+                db.collection('users').doc(companyId).collection('properties').orderBy('address').get().then(snapshot => {
+                    let optionsHtml = '<option value="">Select your unit...</option>';
+                    snapshot.forEach(doc => {
+                        optionsHtml += `<option value="${doc.id}">${doc.data().address}</option>`;
+                    });
+                    propertySelect.innerHTML = optionsHtml;
+                });
+
+                // Handle submission
+                maintenanceForm.addEventListener('submit', e => {
+                    e.preventDefault();
+                    const propertyId = propertySelect.value;
+                    const propertyAddress = propertySelect.options[propertySelect.selectedIndex].text;
+                    const issue = document.getElementById('public-issue').value;
+                    const priority = document.getElementById('public-priority').value;
+
+                    db.collection('users').doc(companyId).collection('maintenance').add({
+                        propertyId,
+                        propertyAddress,
+                        issue: `(Public Report) ${issue}`,
+                        priority,
+                        status: 'open',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }).then(() => {
+                        alert('Thank you. Your maintenance request has been submitted successfully.');
+                        maintenanceForm.reset();
+                    }).catch(err => {
+                        console.error("Error submitting public maintenance:", err);
+                        alert('Error submitting request. Please try again.');
+                    });
+                });
             }
         });
     </script>

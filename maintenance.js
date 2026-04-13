@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeDetailPanelBtn = document.getElementById('close-detail-panel');
     const requestForm = document.getElementById('request-form');
     const deleteRequestBtn = document.getElementById('delete-request-btn');
+    const printRequestBtn = document.getElementById('print-request-btn');
 
     let currentUserId;
     let currentRequestId;
@@ -21,12 +22,19 @@ document.addEventListener('DOMContentLoaded', () => {
     requestsList.addEventListener('click', handleRowClick);
     requestForm.addEventListener('submit', handleFormSubmit);
     deleteRequestBtn.addEventListener('click', handleDelete);
+    
+    printRequestBtn.addEventListener('click', () => {
+        if (currentRequestId && currentUserId) {
+            window.open(`maintenance-print.html?id=${currentRequestId}&company=${currentUserId}`, '_blank');
+        }
+    });
 
     function handleAddNew() {
         currentRequestId = null;
         requestForm.reset();
         document.getElementById('detail-request-issue').textContent = 'New Request';
         loadAllProperties(currentUserId);
+        printRequestBtn.style.display = 'none';
         openPanel();
 
     }
@@ -97,6 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('request-issue').value = request.issue;
                 document.getElementById('request-priority').value = request.priority;
                 document.getElementById('request-status').value = request.status;
+                printRequestBtn.style.display = 'inline-block';
                 loadAllProperties(currentUserId, request.propertyId);
             }
         });
