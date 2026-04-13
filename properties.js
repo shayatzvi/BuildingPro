@@ -47,19 +47,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const address = document.getElementById('property-address').value;
         const notes = document.getElementById('property-notes').value;
         const rent = document.getElementById('property-rent').value;
-        const beds = document.getElementById('property-beds').value;
+        const beds = Number(document.getElementById('property-beds').value) || 1;
         const baths = document.getElementById('property-baths').value;
+        const allowMultipleTenants = document.getElementById('property-multi-tenant').checked;
 
-        const propertyData = { address, notes, rent, beds, baths };
+        const propertyData = { address, notes, rent, beds, baths, allowMultipleTenants };
         
         if (currentPropertyId) {
-            // Update
             db.collection('users').doc(currentUserId).collection('properties').doc(currentPropertyId).update(propertyData)
                 .then(() => console.log('Property Updated'))
                 .catch(err => console.error(err));
         } else {
-            // Create
             propertyData.status = 'vacant';
+            propertyData.tenantCount = 0;
             propertyData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
             db.collection('users').doc(currentUserId).collection('properties').add(propertyData)
                 .then(docRef => {
@@ -113,12 +113,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('property-rent').value = property.rent || '';
                 document.getElementById('property-beds').value = property.beds || '';
                 document.getElementById('property-baths').value = property.baths || '';
+                document.getElementById('property-multi-tenant').checked = !!property.allowMultipleTenants;
 
-                // Disable delete if occupied
-                deletePropertyBtn.disabled = property.status === 'occupied';
+                const currentStatus = computePropertyStatus(property);
+                deletePropertyBtn.disabled = currentStatus !== 'vacant';
 
-                // Load related data
-                loadRelatedTenant(id, property.status);
+                loadRelatedTenant(id, currentStatus);
                 loadRelatedMaintenance(id);
                 loadPropertyFinancials(id);
             }
@@ -128,23 +128,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function loadRelatedTenant(propertyId, status) {
     const tenantInfoEl = document.getElementById('property-tenant-info');
-    if (status === 'occupied') {
-        db.collection('users').doc(auth.currentUser.uid).collection('tenants')
-          .where('propertyId', '==', propertyId).limit(1).get()
-          .then(snapshot => {
-              if (!snapshot.empty) {
-                  const tenant = snapshot.docs[0].data();
-                  tenantInfoEl.innerHTML = `
-                    <h4>Current Tenant</h4>
-                    <p>${tenant.name}</p>
-                  `;
-              } else {
-                tenantInfoEl.innerHTML = '';
-              }
-          });
-    } else {
-        tenantInfoEl.innerHTML = '<h4>Tenant</h4><p class="text-muted">This property is vacant.</p>';
-    }
+    db.collection('users').doc(auth.currentUser.uid).collection('properties').doc(propertyId).get()
+      .then(propertyDoc => {
+          const property = propertyDoc.exists ? propertyDoc.data() : {};
+          const beds = Number(property.beds) || 1;
+          const allowMultipleTenants = !!property.allowMultipleTenants;
+
+          return db.collection('users').doc(auth.currentUser.uid).collection('tenants')
+            .where('propertyId', '==', propertyId)
+            .get()
+            .then(snapshot => {
+                const tenants = snapshot.docs.map(doc => doc.data());
+                const occupiedBeds = tenants.length;
+                const availableBeds = Math.max(0, beds - occupiedBeds);
+
+                let html = '<h4>Occupancy</h4>';
+                if (occupiedBeds === 0) {
+                    html += '<p class="text-muted">This property is vacant.</p>';
+                } else {
+                    html += `<p>${occupiedBeds}/${beds} bed${beds === 1 ? '' : 's'} occupied</p>`;
+                    if (availableBeds > 0) {
+                        html += `<p>${availableBeds} bed${availableBeds === 1 ? '' : 's'} available</p>`;
+                    } else {
+                        html += '<p class="text-success">Fully occupied</p>';
+                    }
+                    html += '<h4>Current Tenants</h4><ul class="list-group">';
+                    tenants.forEach(tenant => {
+                        html += `<li class="list-group-item">${tenant.name}</li>`;
+                    });
+                    html += '</ul>';
+                    if (!allowMultipleTenants && occupiedBeds > 1) {
+                        html += '<p class="text-warning">This property currently has more than one tenant but is not marked as multi-tenant.</p>';
+                    }
+                }
+                tenantInfoEl.innerHTML = html;
+            });
+      })
+      .catch(err => {
+          console.error('Error loading tenant details:', err);
+          tenantInfoEl.innerHTML = '<p class="text-muted">Unable to load tenant data.</p>';
+      });
 }
 
 function loadRelatedMaintenance(propertyId) {
@@ -202,8 +225,8 @@ function listenForProperties(userId) {
     const emptyState = document.getElementById('empty-properties-state');
 
     db.collection('users').doc(userId).collection('properties')
-      .orderBy('createdAt', 'desc')
       .onSnapshot(snapshot => {
+            console.log('Properties snapshot count:', snapshot.size);
             if (snapshot.empty) {
                 propertiesList.innerHTML = '';
                 emptyState.style.display = 'block';
@@ -213,15 +236,33 @@ function listenForProperties(userId) {
             let html = '';
             snapshot.forEach(doc => {
                 const p = doc.data();
+                const status = computePropertyStatus(p);
                 html += `
                     <tr data-id="${doc.id}" style="cursor: pointer;">
                         <td>${p.address}</td>
                         <td>${p.beds || 'N/A'} beds / ${p.baths || 'N/A'} baths</td>
                         <td>$${p.rent ? Number(p.rent).toLocaleString() : '0.00'}</td>
-                        <td><span class="status-tag" data-status="${p.status}">${p.status}</span></td>
+                        <td><span class="status-tag" data-status="${status}">${formatStatus(status)}</span></td>
                     </tr>
                 `;
             });
             propertiesList.innerHTML = html;
       });
+}
+
+function computePropertyStatus(property) {
+    const tenantCount = Number(property.tenantCount) || 0;
+    const beds = Number(property.beds) || 1;
+    const allowMultipleTenants = !!property.allowMultipleTenants;
+
+    if (tenantCount === 0) return 'vacant';
+    if (!allowMultipleTenants) return 'occupied';
+    if (tenantCount >= beds) return 'occupied';
+    return 'partially-occupied';
+}
+
+function formatStatus(status) {
+    if (status === 'partially-occupied') return 'Partially Occupied';
+    if (status === 'vacant') return 'Vacant';
+    return 'Occupied';
 }

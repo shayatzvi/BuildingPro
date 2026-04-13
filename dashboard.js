@@ -19,27 +19,19 @@ function fetchDashboardData(userId, charts) {
 
     const occupancyChartCtx = document.getElementById('occupancy-chart').getContext('2d');
     const rentChartCtx = document.getElementById('rent-chart').getContext('2d');
+    let totalBeds = 0;
+    let occupiedBeds = 0;
 
-    // Listen for properties
-    db.collection('users').doc(userId).collection('properties').onSnapshot(snapshot => {
-        const properties = [];
-        snapshot.forEach(doc => properties.push(doc.data()));
-
-        const totalProperties = properties.length;
-        const occupiedProperties = properties.filter(p => p.status === 'occupied').length;
-        const vacantProperties = totalProperties - occupiedProperties;
-        
-        const occupancy = totalProperties > 0 ? (occupiedProperties / totalProperties) * 100 : 0;
-
-        totalPropertiesEl.textContent = totalProperties;
-        occupancyRateEl.textContent = `${occupancy.toFixed(0)}%`;
+    function refreshOccupancy() {
+        const occupancyRate = totalBeds > 0 ? (occupiedBeds / totalBeds) * 100 : 0;
+        occupancyRateEl.textContent = `${occupancyRate.toFixed(0)}%`;
 
         updateChart(charts, 'occupancyChart', occupancyChartCtx, {
             type: 'doughnut',
             data: {
-                labels: ['Occupied', 'Vacant'],
+                labels: ['Occupied Beds', 'Vacant Beds'],
                 datasets: [{
-                    data: [occupiedProperties, vacantProperties],
+                    data: [occupiedBeds, Math.max(0, totalBeds - occupiedBeds)],
                     backgroundColor: ['#10b981', '#374151'],
                     borderWidth: 0
                 }]
@@ -51,6 +43,18 @@ function fetchDashboardData(userId, charts) {
                 plugins: { legend: { display: false } }
             }
         });
+    }
+
+    // Listen for properties
+    db.collection('users').doc(userId).collection('properties').onSnapshot(snapshot => {
+        totalBeds = 0;
+        snapshot.forEach(doc => {
+            const property = doc.data();
+            totalBeds += Number(property.beds) || 0;
+        });
+
+        totalPropertiesEl.textContent = snapshot.size.toString();
+        refreshOccupancy();
     });
 
     // Listen for paid invoices to calculate total collected rent
@@ -105,6 +109,14 @@ function fetchDashboardData(userId, charts) {
     // Listen for total tenants
     db.collection('users').doc(userId).collection('tenants').onSnapshot(snapshot => {
         totalTenantsEl.textContent = snapshot.size.toString();
+        occupiedBeds = 0;
+        snapshot.docs.forEach(doc => {
+            const tenant = doc.data();
+            if (tenant.propertyId) {
+                occupiedBeds += 1;
+            }
+        });
+        refreshOccupancy();
     });
 
     // Listen for open maintenance requests

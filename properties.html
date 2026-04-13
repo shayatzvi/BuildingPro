@@ -12,7 +12,8 @@
         .page-header { margin-top: 0; }
         .status-tag { display: inline-block; padding: 2px 8px; border-radius: 10px; color: #fff; }
         .status-tag[data-status="vacant"] { background-color: #5cb85c; }
-        .status-tag[data-status="occupied"] { background-color: #f0ad4e; }
+        .status-tag[data-status="partially-occupied"] { background-color: #f0ad4e; }
+        .status-tag[data-status="occupied"] { background-color: #d9534f; }
     </style>
 </head>
 <body>
@@ -107,6 +108,12 @@
                                 <div class="col-sm-4">
                                     <div class="form-group"><label for="property-baths">Baths</label><input type="number" id="property-baths" class="form-control"></div>
                                 </div>
+                            </div>
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" id="property-multi-tenant">
+                                    Allow more than one tenant when this property has more than one bed
+                                </label>
                             </div>
                             <div class="form-group">
                                 <label for="property-notes">Notes</label>

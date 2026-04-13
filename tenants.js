@@ -46,25 +46,56 @@ document.addEventListener('DOMContentLoaded', () => {
         const name = document.getElementById('tenant-name').value;
         const email = document.getElementById('tenant-email').value;
         const propertyId = document.getElementById('tenant-property').value;
-        const propertyAddress = document.getElementById('tenant-property').options[document.getElementById('tenant-property').selectedIndex].text;
+        const propertyAddress = propertyId ? document.getElementById('tenant-property').options[document.getElementById('tenant-property').selectedIndex].text : '';
         const leaseEndDate = document.getElementById('tenant-lease-end').value;
         const originalPropertyId = document.getElementById('tenant-property-id').value;
 
         const tenantData = { name, email, propertyId, propertyAddress, leaseEndDate };
 
         if (currentTenantId) { // Updating existing tenant
-            const tenantUpdate = db.collection('users').doc(currentUserId).collection('tenants').doc(currentTenantId).update(tenantData)
-                .then(() => {
-                    // If property changed, update statuses
-                    if (originalPropertyId && originalPropertyId !== propertyId) {
-                        const batch = db.batch();
-                        const oldPropRef = db.collection('users').doc(currentUserId).collection('properties').doc(originalPropertyId);
-                        batch.update(oldPropRef, { status: 'vacant' });
-                        const newPropRef = db.collection('users').doc(currentUserId).collection('properties').doc(propertyId);
-                        batch.update(newPropRef, { status: 'occupied' });
-                        return batch.commit();
+            let updatePromise = db.collection('users').doc(currentUserId).collection('tenants').doc(currentTenantId).update(tenantData);
+
+            if (originalPropertyId && originalPropertyId !== propertyId) {
+                updatePromise = updatePromise.then(() => Promise.all([
+                    db.collection('users').doc(currentUserId).collection('properties').doc(originalPropertyId).get(),
+                    propertyId ? db.collection('users').doc(currentUserId).collection('properties').doc(propertyId).get() : Promise.resolve(null)
+                ])).then(([oldPropSnap, newPropSnap]) => {
+                    const batch = db.batch();
+
+                    if (oldPropSnap && oldPropSnap.exists) {
+                        const oldProperty = oldPropSnap.data();
+                        const oldCount = Math.max(0, (Number(oldProperty.tenantCount) || 1) - 1);
+                        batch.update(oldPropSnap.ref, {
+                            tenantCount: oldCount,
+                            status: computePropertyStatus({ ...oldProperty, tenantCount: oldCount })
+                        });
                     }
-                })
+
+                    if (newPropSnap && newPropSnap.exists) {
+                        const newProperty = newPropSnap.data();
+                        const newCount = (Number(newProperty.tenantCount) || 0) + 1;
+                        batch.update(newPropSnap.ref, {
+                            tenantCount: newCount,
+                            status: computePropertyStatus({ ...newProperty, tenantCount: newCount })
+                        });
+                    }
+
+                    return batch.commit();
+                });
+            } else if (!originalPropertyId && propertyId) {
+                updatePromise = updatePromise.then(() => db.collection('users').doc(currentUserId).collection('properties').doc(propertyId).get())
+                    .then(propertySnap => {
+                        if (!propertySnap.exists) return;
+                        const property = propertySnap.data();
+                        const newCount = (Number(property.tenantCount) || 0) + 1;
+                        return propertySnap.ref.update({
+                            tenantCount: newCount,
+                            status: computePropertyStatus({ ...property, tenantCount: newCount })
+                        });
+                    });
+            }
+
+            updatePromise
                 .then(() => {
                     console.log('Tenant Updated');
                     closePanel();
@@ -77,10 +108,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const newBillingId = Math.floor(1000000 + Math.random() * 9000000).toString();
 
             db.collection('users').doc(currentUserId).collection('tenants').doc(newBillingId).set(tenantData)
-                .then(docRef => {
-                    // Update the property to be occupied
-                    db.collection('users').doc(currentUserId).collection('properties').doc(propertyId).update({ status: 'occupied' });
-                    
+                .then(() => {
+                    if (!propertyId) return null;
+                    return db.collection('users').doc(currentUserId).collection('properties').doc(propertyId).get();
+                })
+                .then(propertySnap => {
+                    if (!propertySnap || !propertySnap.exists) return null;
+                    const property = propertySnap.data();
+                    const updatedCount = (Number(property.tenantCount) || 0) + 1;
+                    return propertySnap.ref.update({
+                        tenantCount: updatedCount,
+                        status: computePropertyStatus({ ...property, tenantCount: updatedCount })
+                    });
+                })
+                .then(() => {
                     console.log('Tenant Added with ID:', newBillingId);
                     alert(`Tenant "${name}" created.\nTheir Billing ID is: ${newBillingId}`);
                     closePanel();
@@ -92,16 +133,26 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleDelete() {
         if (!currentTenantId) return;
         const propertyId = document.getElementById('tenant-property-id').value;
-        if (confirm('Are you sure you want to remove this tenant? This will set their assigned property to "vacant".')) {
+        if (confirm('Are you sure you want to remove this tenant? This will update the assigned property occupancy.')) {
             const tenantRef = db.collection('users').doc(currentUserId).collection('tenants').doc(currentTenantId);
 
             if (propertyId) {
-                // Tenant is assigned to a property, update property status in a batch
                 const propertyRef = db.collection('users').doc(currentUserId).collection('properties').doc(propertyId);
-                const batch = db.batch();
-                batch.delete(tenantRef);
-                batch.update(propertyRef, { status: 'vacant' });
-                batch.commit().then(() => {
+                propertyRef.get().then(propertySnap => {
+                    const batch = db.batch();
+                    batch.delete(tenantRef);
+
+                    if (propertySnap.exists) {
+                        const property = propertySnap.data();
+                        const updatedCount = Math.max(0, (Number(property.tenantCount) || 1) - 1);
+                        batch.update(propertyRef, {
+                            tenantCount: updatedCount,
+                            status: computePropertyStatus({ ...property, tenantCount: updatedCount })
+                        });
+                    }
+
+                    return batch.commit();
+                }).then(() => {
                     console.log('Tenant removed and property updated.');
                     closePanel();
                 }).catch(err => console.error('Error removing tenant and updating property:', err));
@@ -148,15 +199,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function loadVacantProperties(userId, currentPropertyId) {
     const propertySelect = document.getElementById('tenant-property');
-    // Get all properties to populate dropdown
     db.collection('users').doc(userId).collection('properties').get().then(snapshot => {
         let optionsHtml = '<option value="">NOT CURRENTLY IN</option>';
         snapshot.forEach(doc => {
             const property = doc.data();
-            // A property is available if it's vacant OR it's the one currently assigned to this tenant
-            if (property.status === 'vacant' || doc.id === currentPropertyId) {
+            const tenantCount = Number(property.tenantCount) || 0;
+            const beds = Number(property.beds) || 1;
+            const allowMultipleTenants = !!property.allowMultipleTenants;
+            const available = doc.id === currentPropertyId || (tenantCount < beds && (allowMultipleTenants || tenantCount === 0));
+            const status = available && tenantCount > 0 ? (allowMultipleTenants ? (tenantCount >= beds ? 'Occupied' : 'Partially Occupied') : 'Occupied') : 'Vacant';
+
+            if (available) {
                 const selected = doc.id === currentPropertyId ? 'selected' : '';
-                optionsHtml += `<option value="${doc.id}" ${selected}>${property.address}</option>`;
+                optionsHtml += `<option value="${doc.id}" ${selected}>${property.address} (${tenantCount}/${beds} occupied, ${status})</option>`;
             }
         });
         propertySelect.innerHTML = optionsHtml;
@@ -186,6 +241,17 @@ function loadTenantMaintenanceHistory(userId, propertyId) {
           }
           historyEl.innerHTML = html;
       });
+}
+
+function computePropertyStatus(property) {
+    const tenantCount = Number(property.tenantCount) || 0;
+    const beds = Number(property.beds) || 1;
+    const allowMultipleTenants = !!property.allowMultipleTenants;
+
+    if (tenantCount === 0) return 'vacant';
+    if (!allowMultipleTenants) return 'occupied';
+    if (tenantCount >= beds) return 'occupied';
+    return 'partially-occupied';
 }
 
 function listenForTenants(userId) {
