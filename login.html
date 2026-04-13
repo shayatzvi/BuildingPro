@@ -71,6 +71,15 @@
                     loginError.style.display = 'block';
                 });
         });
+
+        // Check if user is already logged in on page load
+firebase.auth().onAuthStateChanged((user) => {
+    if (user) {
+        // User is already authenticated, redirect to dashboard
+        window.location.href = 'dashboard.html';
+    }
+    // If no user, the login form remains visible
+});
     </script>
 </body>
 </html>
