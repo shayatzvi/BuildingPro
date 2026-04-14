@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const addInvoiceBtn = document.getElementById('add-invoice-btn');
     const invoicesList = document.getElementById('invoices-list');
     const invoiceTenantSelect = document.getElementById('invoice-tenant');
+    const invoiceSearch = document.getElementById('invoice-search');
 
     // Modal elements
     const invoiceForm = document.getElementById('invoice-form');
@@ -19,6 +20,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    if (invoiceSearch) {
+        invoiceSearch.addEventListener('input', () => listenForInvoices(currentUserId));
+    }
+
     addInvoiceBtn.addEventListener('click', openInvoiceModal);
     invoiceForm.addEventListener('submit', handleCreateInvoice);
     addLineItemBtn.addEventListener('click', addLineItemRow);
@@ -28,14 +33,21 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('alternate-address-field').style.display = e.target.checked ? 'block' : 'none';
     });
 
-    invoiceTenantSelect.addEventListener('change', (e) => {
+    // Initialize Select2 for tenant selection
+    $('#invoice-tenant').select2({
+        dropdownParent: $('#invoice-modal'),
+        width: '100%'
+    });
+
+    $('#invoice-tenant').on('change', function() {
+        const val = $(this).val();
         const customFields = document.getElementById('custom-client-fields');
         const alternateAddressGroup = document.getElementById('alternate-address-group');
 
-        if (e.target.value === 'custom') {
+        if (val === 'custom') {
             customFields.style.display = 'block';
             alternateAddressGroup.style.display = 'none';
-        } else if (e.target.value) {
+        } else if (val) {
             customFields.style.display = 'none';
             alternateAddressGroup.style.display = 'block';
         } else {
@@ -64,6 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function listenForInvoices(userId) {
     const invoicesList = document.getElementById('invoices-list');
     const emptyState = document.getElementById('empty-invoices-state');
+    const searchTerm = document.getElementById('invoice-search')?.value.toLowerCase() || '';
 
     db.collection('users').doc(userId).collection('invoices')
       .orderBy('dueDate', 'desc')
@@ -82,6 +95,13 @@ function listenForInvoices(userId) {
             const isOverdue = invoice.status === 'due' && dueDate < new Date();
             const status = isOverdue ? 'overdue' : invoice.status;
 
+            const matchesSearch = 
+                invoice.tenantName?.toLowerCase().includes(searchTerm) ||
+                invoice.propertyAddress?.toLowerCase().includes(searchTerm) ||
+                status.toLowerCase().includes(searchTerm);
+
+            if (!matchesSearch) return;
+
             html += `
                 <tr data-id="${doc.id}">
                     <td>${invoice.tenantName}</td>
@@ -99,6 +119,12 @@ function listenForInvoices(userId) {
             `;
         });
         invoicesList.innerHTML = html;
+
+        if (html === '' && searchTerm !== '') {
+            invoicesList.innerHTML = '<tr><td colspan="6" class="text-center">No matching invoices found.</td></tr>';
+        } else if (html === '' && !snapshot.empty) {
+             emptyState.style.display = 'block';
+        }
       });
 }
 
@@ -174,6 +200,7 @@ function loadTenantsIntoSelect(userId) {
                 html += `<option value="${doc.id}" data-property-id="${tenant.propertyId}" data-property-address="${tenant.propertyAddress}">${tenant.name} - ${tenant.propertyAddress}</option>`;
             });
             select.innerHTML = html;
+            $(select).trigger('change'); // Notify Select2 of new options
             resolve();
         });
     });
@@ -232,8 +259,7 @@ function handleCreateInvoice(e) {
         totalAmount,
         lineItems,
         dueDate: firebase.firestore.Timestamp.fromDate(new Date(dueDate)),
-        status: 'due',
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        status: 'due'
     };
 
     if (editingId) {
@@ -246,6 +272,7 @@ function handleCreateInvoice(e) {
             .catch(err => console.error('Error updating invoice:', err));
     } else {
         // Create new invoice
+        invoiceData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
         db.collection('users').doc(auth.currentUser.uid).collection('invoices').add(invoiceData)
             .then(() => {
                 console.log('Invoice created.');
@@ -293,10 +320,35 @@ function handleEditInvoice(invoiceId) {
 
             // Populate form fields
             document.getElementById('invoice-id').value = doc.id;
-            document.getElementById('invoice-due-date').valueAsDate = invoice.dueDate.toDate();
+            
+            // Set date correctly for the date input using local date parts to avoid timezone shifts
+            const dateObj = invoice.dueDate.toDate();
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            document.getElementById('invoice-due-date').value = `${year}-${month}-${day}`;
             
             loadTenantsIntoSelect(currentUserId).then(() => {
-                document.getElementById('invoice-tenant').value = invoice.tenantId;
+                const tenantSelect = document.getElementById('invoice-tenant');
+                tenantSelect.value = invoice.tenantId;
+                $(tenantSelect).trigger('change'); // Update Select2 UI
+
+                // Restore UI state for custom/alternate address
+                if (invoice.tenantId === 'custom') {
+                    document.getElementById('custom-client-fields').style.display = 'block';
+                    document.getElementById('custom-client-name').value = invoice.tenantName || '';
+                    document.getElementById('custom-client-address').value = (invoice.propertyAddress || '').replace(/<br>/g, '\n');
+                } else {
+                    document.getElementById('alternate-address-group').style.display = 'block';
+                    
+                    // Check if it was an alternate address by comparing with the default property address stored in the dataset
+                    const selectedOption = tenantSelect.options[tenantSelect.selectedIndex];
+                    if (selectedOption && invoice.propertyAddress !== selectedOption.dataset.propertyAddress) {
+                        document.getElementById('use-alternate-address').checked = true;
+                        document.getElementById('alternate-address-field').style.display = 'block';
+                        document.getElementById('alternate-address').value = (invoice.propertyAddress || '').replace(/<br>/g, '\n');
+                    }
+                }
             });
 
             // Populate line items

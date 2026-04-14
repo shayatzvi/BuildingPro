@@ -39,6 +39,7 @@
                     
                     <li><a href="forms.html">Forms</a></li>
                     <li><a href="billing.html">Billing</a></li>
+                    <li><a href="evictions.html">Evictions</a></li>
                     <li><a href="admin.html">Admin</a></li>
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
@@ -66,6 +67,14 @@
                 </div>
                 <div class="panel panel-default">
                     <div class="panel-body">
+                        <div class="row" style="margin-bottom: 15px;">
+                            <div class="col-md-4 col-md-offset-8">
+                                <div class="input-group">
+                                    <span class="input-group-addon"><span class="glyphicon glyphicon-search"></span></span>
+                                    <input type="text" id="tenant-search" class="form-control" placeholder="Search tenants...">
+                                </div>
+                            </div>
+                        </div>
                         <table class="table table-hover">
                             <thead><tr><th>Name</th><th>Property</th><th>Lease End</th></tr></thead>
                             <tbody id="tenants-list"></tbody>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Notice to Vacate</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <style>
+        body { background-color: #fff; padding: 50px; }
+        .notice-container { max-width: 700px; margin: 0 auto; border: 1px solid #000; padding: 40px; }
+        .header-title { text-align: center; text-decoration: underline; margin-bottom: 40px; }
+        .signature-line { margin-top: 60px; border-top: 1px solid #000; width: 250px; }
+        @media print { .no-print { display: none; } body { padding: 0; } .notice-container { border: none; } }
+    </style>
+</head>
+<body>
+    <div class="text-center no-print" style="margin-bottom: 20px;">
+        <button class="btn btn-primary" onclick="window.print()">Print Formal Notice</button>
+    </div>
+
+    <div class="notice-container">
+        <h2 class="header-title">NOTICE TO QUIT / VACATE</h2>
+        
+        <p class="text-right"><strong>Date:</strong> <span id="display-date"></span></p>
+        
+        <p><strong>TO TENANT(S):</strong> <span id="tenant-name"></span></p>
+        <p><strong>AND ALL OTHERS IN POSSESSION OF THE PREMISES LOCATED AT:</strong></p>
+        <p style="padding-left: 20px;"><strong id="property-address"></strong></p>
+
+        <div style="margin-top: 40px;">
+            <p>PLEASE TAKE NOTICE that you are hereby required to vacate and deliver up possession of the above-described premises on or before:</p>
+            <p class="text-center" style="font-size: 1.5em; margin: 20px 0;"><strong><span id="termination-date"></span></strong></p>
+        </div>
+
+        <div style="margin-top: 30px;">
+            <p><strong>REASON FOR THIS NOTICE:</strong></p>
+            <p id="eviction-reason" style="background: #f9f9f9; padding: 15px; border: 1px solid #eee;"></p>
+        </div>
+
+        <p style="margin-top: 40px;">If you fail to vacate the premises by the date specified above, legal proceedings will be instituted against you to recover possession, to recover any rent due, and to recover damages for your continued occupancy of the premises.</p>
+
+        <div class="row">
+            <div class="col-xs-6">
+                <div class="signature-line"></div>
+                <p>Landlord/Agent Signature</p>
+                <p id="company-name"></p>
+                <p id="company-address" style="font-size: 0.9em;"></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const db = firebase.firestore();
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id');
+            const companyId = params.get('company');
+
+            if (!id || !companyId) return;
+
+            // Load Company Info
+            db.collection('users').doc(companyId).collection('profile').doc('info').get().then(doc => {
+                if (doc.exists) {
+                    const p = doc.data();
+                    document.getElementById('company-name').textContent = p.companyName || '';
+                    document.getElementById('company-address').textContent = p.companyAddress || '';
+                }
+            });
+
+            // Load Eviction Info
+            db.collection('users').doc(companyId).collection('evictions').doc(id).get().then(doc => {
+                if (doc.exists) {
+                    const d = doc.data();
+                    document.getElementById('display-date').textContent = formatDate(d.noticeDate);
+                    document.getElementById('tenant-name').textContent = d.tenantName;
+                    document.getElementById('property-address').textContent = d.propertyAddress;
+                    document.getElementById('termination-date').textContent = formatDate(d.terminationDate);
+                    document.getElementById('eviction-reason').textContent = d.reason;
+                    document.title = `Eviction Notice - ${d.tenantName}`;
+                }
+            });
+
+            function formatDate(dateStr) {
+                if (!dateStr) return 'N/A';
+                const [year, month, day] = dateStr.split('-');
+                return new Date(year, month - 1, day).toLocaleDateString(undefined, { 
+                    year: 'numeric', month: 'long', day: 'numeric' 
+                });
+            }
+        });
+    </script>
+</body>
+</html>

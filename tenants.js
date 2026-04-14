@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeDetailPanelBtn = document.getElementById('close-detail-panel');
     const tenantForm = document.getElementById('tenant-form');
     const deleteTenantBtn = document.getElementById('delete-tenant-btn');
+    const tenantSearch = document.getElementById('tenant-search');
 
     let currentUserId;
     let currentTenantId;
@@ -21,6 +22,10 @@ document.addEventListener('DOMContentLoaded', () => {
     tenantsList.addEventListener('click', handleRowClick);
     tenantForm.addEventListener('submit', handleFormSubmit);
     deleteTenantBtn.addEventListener('click', handleDelete);
+
+    if (tenantSearch) {
+        tenantSearch.addEventListener('input', () => listenForTenants(currentUserId));
+    }
 
     function handleAddNew() {
         currentTenantId = null;
@@ -257,6 +262,7 @@ function computePropertyStatus(property) {
 function listenForTenants(userId) {
     const tenantsList = document.getElementById('tenants-list');
     const emptyState = document.getElementById('empty-tenants-state');
+    const searchTerm = document.getElementById('tenant-search')?.value.toLowerCase() || '';
 
     db.collection('users').doc(userId).collection('tenants')
       .orderBy('createdAt', 'desc')
@@ -271,6 +277,12 @@ function listenForTenants(userId) {
         let html = '';
         snapshot.forEach(doc => {
             const t = doc.data();
+            const matchesSearch = 
+                t.name?.toLowerCase().includes(searchTerm) ||
+                t.propertyAddress?.toLowerCase().includes(searchTerm);
+            
+            if (!matchesSearch) return;
+
             const tr = `
                 <tr data-id="${doc.id}" style="cursor: pointer;">
                     <td>${t.name}</td>
@@ -281,6 +293,10 @@ function listenForTenants(userId) {
             html += tr;
         });
         tenantsList.innerHTML = html;
+
+        if (html === '' && searchTerm !== '') {
+            tenantsList.innerHTML = '<tr><td colspan="3" class="text-center">No matching tenants found.</td></tr>';
+        }
     }, error => {
         console.error("Error listening for tenants: ", error);
     });

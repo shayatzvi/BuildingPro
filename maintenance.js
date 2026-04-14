@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const requestForm = document.getElementById('request-form');
     const deleteRequestBtn = document.getElementById('delete-request-btn');
     const printRequestBtn = document.getElementById('print-request-btn');
+    const maintenanceSearch = document.getElementById('maintenance-search');
 
     let currentUserId;
     let currentRequestId;
@@ -17,12 +18,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Initialize Select2 for property selection
+    $('#request-property').select2({
+        width: '100%'
+    });
+
     addRequestBtn.addEventListener('click', handleAddNew);
     closeDetailPanelBtn.addEventListener('click', closePanel);
     requestsList.addEventListener('click', handleRowClick);
     requestForm.addEventListener('submit', handleFormSubmit);
     deleteRequestBtn.addEventListener('click', handleDelete);
     
+    if (maintenanceSearch) {
+        maintenanceSearch.addEventListener('input', () => listenForRequests(currentUserId));
+    }
+
     printRequestBtn.addEventListener('click', () => {
         if (currentRequestId && currentUserId) {
             window.open(`maintenance-print.html?id=${currentRequestId}&company=${currentUserId}`, '_blank');
@@ -123,12 +133,14 @@ function loadAllProperties(userId, currentPropertyId) {
             optionsHtml += `<option value="${doc.id}" ${selected}>${property.address}</option>`;
         });
         propertySelect.innerHTML = optionsHtml;
+        $(propertySelect).trigger('change'); // Notify Select2 of new options
     });
 }
 
 function listenForRequests(userId) {
     const requestsList = document.getElementById('requests-list');
     const emptyState = document.getElementById('empty-requests-state');
+    const searchTerm = document.getElementById('maintenance-search')?.value.toLowerCase() || '';
 
     db.collection('users').doc(userId).collection('maintenance').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
             if (snapshot.empty) {
@@ -140,6 +152,14 @@ function listenForRequests(userId) {
             let html = '';
             snapshot.forEach(doc => {
                 const r = doc.data();
+                const matchesSearch = 
+                    r.propertyAddress?.toLowerCase().includes(searchTerm) ||
+                    r.issue?.toLowerCase().includes(searchTerm) ||
+                    r.priority?.toLowerCase().includes(searchTerm) ||
+                    r.status?.toLowerCase().includes(searchTerm);
+                
+                if (!matchesSearch) return;
+
                 html += `
                     <tr data-id="${doc.id}" style="cursor: pointer;">
                         <td>${r.propertyAddress}</td>
@@ -150,5 +170,9 @@ function listenForRequests(userId) {
                 `;
             });
             requestsList.innerHTML = html;
+
+            if (html === '' && searchTerm !== '') {
+                requestsList.innerHTML = '<tr><td colspan="4" class="text-center">No matching requests found.</td></tr>';
+            }
       });
 }

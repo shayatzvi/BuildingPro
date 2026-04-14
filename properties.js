@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeDetailPanelBtn = document.getElementById('close-detail-panel');
     const propertyForm = document.getElementById('property-form');
     const deletePropertyBtn = document.getElementById('delete-property-btn');
+    const propertySearch = document.getElementById('property-search');
 
     let currentUserId;
     let currentPropertyId;
@@ -23,6 +24,10 @@ document.addEventListener('DOMContentLoaded', () => {
     propertiesList.addEventListener('click', handleRowClick);
     propertyForm.addEventListener('submit', handleFormSubmit);
     deletePropertyBtn.addEventListener('click', handleDelete);
+
+    if (propertySearch) {
+        propertySearch.addEventListener('input', () => listenForProperties(currentUserId));
+    }
 
     // --- Handlers ---
     function handleAddNew() {
@@ -223,6 +228,7 @@ function loadPropertyFinancials(propertyId) {
 function listenForProperties(userId) {
     const propertiesList = document.getElementById('properties-list');
     const emptyState = document.getElementById('empty-properties-state');
+    const searchTerm = document.getElementById('property-search')?.value.toLowerCase() || '';
 
     db.collection('users').doc(userId).collection('properties')
       .onSnapshot(snapshot => {
@@ -237,6 +243,13 @@ function listenForProperties(userId) {
             snapshot.forEach(doc => {
                 const p = doc.data();
                 const status = computePropertyStatus(p);
+
+                const matchesSearch = 
+                    p.address?.toLowerCase().includes(searchTerm) ||
+                    status.toLowerCase().includes(searchTerm);
+                
+                if (!matchesSearch) return;
+
                 html += `
                     <tr data-id="${doc.id}" style="cursor: pointer;">
                         <td>${p.address}</td>
@@ -247,6 +260,10 @@ function listenForProperties(userId) {
                 `;
             });
             propertiesList.innerHTML = html;
+
+            if (html === '' && searchTerm !== '') {
+                propertiesList.innerHTML = '<tr><td colspan="4" class="text-center">No matching properties found.</td></tr>';
+            }
       });
 }
 

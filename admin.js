@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const announcementsList = document.getElementById('announcements-list');
     const clearAnnouncementFormBtn = document.getElementById('clear-announcement-form');
     const companyProfileForm = document.getElementById('company-profile-form');
+    const announcementSearch = document.getElementById('announcement-search');
 
     let currentUserId;
     let quill;
@@ -24,6 +25,10 @@ document.addEventListener('DOMContentLoaded', () => {
             loadCompanyProfile(currentUserId);
         }
     });
+
+    if (announcementSearch) {
+        announcementSearch.addEventListener('input', () => listenForAnnouncements(currentUserId));
+    }
 
     copyLinkBtn.addEventListener('click', () => {
         portalLinkInput.select();
@@ -112,6 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function listenForAnnouncements(userId) {
+        const searchTerm = document.getElementById('announcement-search')?.value.toLowerCase() || '';
         db.collection('users').doc(userId).collection('announcements').orderBy('createdAt', 'desc')
             .onSnapshot(snapshot => {
                 let html = '';
@@ -121,6 +127,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 snapshot.forEach(doc => {
                     const announcement = doc.data();
+                    const matchesSearch = 
+                        announcement.title?.toLowerCase().includes(searchTerm) ||
+                        announcement.content?.toLowerCase().includes(searchTerm);
+                    
+                    if (!matchesSearch) return;
+
                     html += `
                         <div class="list-group-item" data-id="${doc.id}">
                             <div class="pull-right">
@@ -133,6 +145,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     `;
                 });
                 announcementsList.innerHTML = html;
+
+                if (html === '' && searchTerm !== '') {
+                    announcementsList.innerHTML = '<div class="list-group-item"><p class="list-group-item-text">No matching announcements found.</p></div>';
+                }
             });
     }
 

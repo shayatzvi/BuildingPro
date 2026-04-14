@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const addFieldBtn = document.getElementById('add-field-btn');
     const fieldsContainer = document.getElementById('form-fields-container');
     const copyLinkBtn = document.getElementById('copy-link-btn');
+    const formSearch = document.getElementById('form-search');
 
     let currentUserId;
     let currentFormId;
@@ -29,6 +30,10 @@ document.addEventListener('DOMContentLoaded', () => {
     fieldsContainer.addEventListener('click', handleFieldDelete);
     fieldsContainer.addEventListener('change', handleFieldTypeChange);
     copyLinkBtn.addEventListener('click', handleCopyLink);
+
+    if (formSearch) {
+        formSearch.addEventListener('input', () => listenForForms(currentUserId));
+    }
 
     function handleAddNew() {
         currentFormId = null;
@@ -228,6 +233,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function listenForForms(userId) {
         const emptyState = document.getElementById('empty-forms-state');
+    const searchTerm = document.getElementById('form-search')?.value.toLowerCase() || '';
+
         db.collection('users').doc(userId).collection('forms').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
             if (snapshot.empty) {
                 formsList.innerHTML = '';
@@ -238,6 +245,10 @@ document.addEventListener('DOMContentLoaded', () => {
             let html = '';
             snapshot.forEach(doc => {
                 const form = doc.data();
+            const matchesSearch = form.title?.toLowerCase().includes(searchTerm);
+            
+            if (!matchesSearch) return;
+
                 html += `
                     <tr data-id="${doc.id}" style="cursor: pointer;">
                         <td>${form.title}</td>
@@ -247,6 +258,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
             });
             formsList.innerHTML = html;
+
+        if (html === '' && searchTerm !== '') {
+            formsList.innerHTML = '<tr><td colspan="3" class="text-center">No matching forms found.</td></tr>';
+        }
         });
     }
 
